@@ -25,7 +25,7 @@ import math
 from lasagne.nonlinearities import rectify, softmax
 from lasagne.layers import InputLayer, DenseLayer, DropoutLayer, batch_norm, BatchNormLayer
 from lasagne.layers import ElemwiseSumLayer, NonlinearityLayer, GlobalPoolLayer
-from lasagne.layers.dnn import Conv2DDNNLayer as ConvLayer
+# from lasagne.layers.dnn import Conv2DDNNLayer as ConvLayer
 from lasagne.init import HeNormal
 from lasagne.layers import Conv2DLayer as ConvLayer
 
@@ -39,36 +39,38 @@ sys.setrecursionlimit(10000)
 # from 'https://www.cs.toronto.edu/~kriz/cifar-100-python.tar.gz' for CIFAR-100
 
 def unpickle(file):
-    import cPickle
-    fo = open(file, 'rb')
-    dict = cPickle.load(fo)
-    fo.close()
+    import pickle
+    with open(file, 'rb') as fo:
+        dict = pickle.load(fo, encoding='bytes')
     return dict
 
 def load_data(dataset):
     xs = []
     ys = []
     if dataset == 'CIFAR-10':
-        for j in range(5):
-          d = unpickle('cifar-10-batches-py/data_batch_'+`j+1`)
-          x = d['data']
-          y = d['labels']
+        list1 = [1,2,3,4,5]
+        for j in range(len(list1)):
+          index_str = str(list1[j])
+          d = unpickle('cifar-10-batches-py/data_batch_'+index_str)
+          x = d[b'data']
+          y = d[b'labels']
           xs.append(x)
           ys.append(y)
 
+
         d = unpickle('cifar-10-batches-py/test_batch')
-        xs.append(d['data'])
-        ys.append(d['labels'])
+        xs.append(d[b'data'])
+        ys.append(d[b'labels'])
     if dataset == 'CIFAR-100':
         d = unpickle('cifar-100-python/train')
-        x = d['data']
-        y = d['fine_labels']
+        x = d[b'data']
+        y = d[b'fine_labels']
         xs.append(x)
         ys.append(y)
 
         d = unpickle('cifar-100-python/test')
-        xs.append(d['data'])
-        ys.append(d['fine_labels'])
+        xs.append(d[b'data'])
+        ys.append(d[b'fine_labels'])
 
     x = np.concatenate(xs)/np.float32(255)
     y = np.concatenate(ys)
@@ -198,7 +200,7 @@ def iterate_minibatches(inputs, targets, batchsize, shuffle=False, augment=False
             # and do random cropping of 32x32
             padded = np.pad(inputs[excerpt],((0,0),(0,0),(4,4),(4,4)),mode='constant')
             random_cropped = np.zeros(inputs[excerpt].shape, dtype=np.float32)
-            crops = np.random.random_integers(0,high=8,size=(batchsize,2))
+            crops = np.random.randint(0,high=8,size=(batchsize,2))
             for r in range(batchsize):
                 random_cropped[r,:,:,:] = padded[r,:,crops[r,0]:(crops[r,0]+32),crops[r,1]:(crops[r,1]+32)]
             inp_exc = random_cropped
@@ -274,7 +276,7 @@ def main(dataset = 'CIFAR-10', iscenario = 0, n=5, k = 1, num_epochs=82, model =
 
     # statistics file
     filename = "stat_{}_{}.txt".format(iscenario, irun)
-    myfile=open(filename, 'w+', 0)
+    myfile=open(filename, 'w')
     start_time0 = time.time()
 
     tt = 0
